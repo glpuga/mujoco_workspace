@@ -92,3 +92,7 @@ MUJOCO_GL=egl ./docker/run.sh -- python3 tools/smoke_test.py   # also exercise o
 - [x] Dockerized development environment
 - [ ] Stage 0: environment validation (viewer + headless render)
 - [ ] Stage 1: MJCF basics
+
+## License
+
+Licensed under the [Apache License, Version 2.0](LICENSE).
