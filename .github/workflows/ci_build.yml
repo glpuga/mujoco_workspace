@@ -1,0 +1,38 @@
+name: CI build and smoke tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: '${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build image and applications
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Build development image
+        run: ./docker/run.sh --no-gpu --build -- echo "Image built."
+
+      - name: Build C/C++ applications
+        run: |
+          ./docker/run.sh --no-gpu -- bash -c '
+            cmake -S tools -B build/tools &&
+            cmake --build build/tools
+          '
+
+      - name: Run C++ smoke test
+        run: ./docker/run.sh --no-gpu -- ./build/tools/smoke_test_cpp
+
+      - name: Run Python smoke test
+        run: ./docker/run.sh --no-gpu -- python3 tools/smoke_test.py

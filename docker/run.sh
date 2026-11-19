@@ -132,10 +132,17 @@ else
     DETACH_FLAG=""
 fi
 
+# Compose allocates a TTY by default; disable it when stdin is not a TTY (CI).
+TTY_FLAG=""
+if [[ ! -t 0 ]]; then
+    TTY_FLAG="-T"
+fi
+
 USERID=$(id -u) GROUPID=$(id -g) \
     docker compose ${COMPOSE_FILES} run \
     --name ${CONTAINER_NAME} \
     ${DETACH_FLAG} \
+    ${TTY_FLAG} \
     --rm ${SERVICE_NAME} \
     "${DOCKER_COMMAND[@]}"
 

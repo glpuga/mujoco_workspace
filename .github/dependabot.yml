@@ -1,0 +1,11 @@
+version: 2
+updates:
+  # MuJoCo and Docker base image updates are deliberately manual: the pip pin in
+  # docker/files/requirements.txt and MUJOCO_VERSION in docker/Dockerfile must move
+  # together.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: ":seedling:"
