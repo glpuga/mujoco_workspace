@@ -48,7 +48,8 @@ def main() -> None:
     print(f"Hinge angle    : {data.qpos[0]:.3f} rad")
 
     assert np.isfinite(data.qpos).all(), "non-finite state"
-    assert abs(data.time - STEPS * model.opt.timestep) < 1e-9, f"unexpected time {data.time}"
+    expected_time = STEPS * model.opt.timestep
+    assert abs(data.time - expected_time) < 1e-9, f"unexpected time {data.time}"
     assert abs(data.qpos[0] - 1.0) > 1e-3, "pendulum did not move"
 
     if os.environ.get("MUJOCO_GL"):
@@ -57,7 +58,8 @@ def main() -> None:
         pixels = renderer.render()
         assert pixels.shape == (RENDER_HEIGHT, RENDER_WIDTH, 3), pixels.shape
         assert pixels.dtype == np.uint8, pixels.dtype
-        print(f"Offscreen frame: {pixels.shape} {pixels.dtype} ({os.environ['MUJOCO_GL']})")
+        backend = os.environ["MUJOCO_GL"]
+        print(f"Offscreen frame: {pixels.shape} {pixels.dtype} ({backend})")
     else:
         print("Offscreen rendering skipped (set MUJOCO_GL=egl or osmesa to test)")
 
