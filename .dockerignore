@@ -1,0 +1,10 @@
+# Only docker/files/ is read during the build; keep the context small.
+.git
+.github
+.agents
+build/
+install/
+log/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/

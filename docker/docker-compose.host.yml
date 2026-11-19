@@ -1,0 +1,10 @@
+# Docker Compose override file for host network mode
+#
+# This file configures the container to use the host network, so X11 sockets and
+# any future local services are reachable without extra forwarding.
+#
+# Usage: Automatically applied by run.sh.
+
+services:
+  mujoco_devel:
+    network_mode: host

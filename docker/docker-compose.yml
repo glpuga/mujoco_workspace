@@ -1,0 +1,27 @@
+services:
+  mujoco_devel_base:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: mujoco_service_image_devel
+    environment:
+      - DISPLAY
+      - QT_X11_NO_MITSHM=1
+      - XAUTHORITY=/tmp/.docker.xauth
+      # Forwarded from the host when set: "egl" or "osmesa" for offscreen rendering.
+      - MUJOCO_GL
+    stdin_open: true
+    tty: true
+    user: ${USERID:-1000}:${GROUPID:-1000}
+    working_dir: /home/developer/ws/src/project
+    volumes:
+      - ..:/home/developer/ws/src/project
+      - /tmp:/tmp:rw
+      - mujoco_persistence:/home/developer/ws/persistence
+
+  mujoco_devel:
+    extends:
+      service: mujoco_devel_base
+
+volumes:
+  mujoco_persistence:

@@ -1,0 +1,3 @@
+# MuJoCo version is pinned so the image is reproducible across machines.
+# The `mujoco` metapackage pulls mujoco-core, mujoco-studio, glfw and pyopengl.
+mujoco==4.0.1

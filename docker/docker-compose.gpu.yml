@@ -1,0 +1,13 @@
+# Docker Compose override file for GPU support
+#
+# Provides NVIDIA GPU acceleration for offscreen rendering and MUJOCO_GL=egl.
+# It is included by default unless --no-gpu is specified.
+#
+# Usage: Automatically applied by run.sh unless the --no-gpu flag is used.
+
+services:
+  mujoco_devel:
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all

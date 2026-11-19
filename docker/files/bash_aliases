@@ -1,0 +1,4 @@
+alias ws='cd ${USER_WS:-/home/developer/ws}'
+alias examples='cd ${USER_WS:-/home/developer/ws}/src/project/examples'
+alias mjversion='python3 -c "import mujoco; print(mujoco.__version__)"'
+alias mjsmoke='python3 ${USER_WS:-/home/developer/ws}/src/project/tools/smoke_test.py'
