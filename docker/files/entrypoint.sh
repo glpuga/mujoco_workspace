@@ -10,12 +10,16 @@ fi
 
 uid=$(id -u)
 cache_dir="$USER_WS/persistence/$uid/cache"
+ccache_dir="$USER_WS/persistence/$uid/ccache"
 history_file="$USER_WS/persistence/$uid/.bash_history"
 
-mkdir -p "$cache_dir"
+mkdir -p "$cache_dir" "$ccache_dir"
 
 rm -rf "$HOME/.cache"
 ln -s "$cache_dir" "$HOME/.cache"
+
+rm -rf "$HOME/.ccache"
+ln -s "$ccache_dir" "$HOME/.ccache"
 
 # if bash_history is not a symlink or if it does not exist, remove it and create a new symlink
 if [ ! -h "$HOME/.bash_history" ]; then

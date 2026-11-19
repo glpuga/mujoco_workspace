@@ -10,6 +10,7 @@ log/
 bags/
 persistence/
 fixuid_complete
+CMakeUserPresets.json
 .ipynb_checkpoints/
 .vscode/
 .~lock.*#

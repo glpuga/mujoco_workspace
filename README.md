@@ -45,7 +45,9 @@ Each stage lives in its own directory and is expected to be revisited and refine
 | 7 | Learning | RL environments, `mujoco` bindings, optionally MJX |
 | 8 | Complex scenes | Multi-body scenes, assets pipeline, domain randomization |
 
-The roadmap is intentionally coarse — exact topics will shift as understanding grows.
+The roadmap is intentionally coarse — exact topics will shift as understanding grows. Examples are
+written in Python by default; a stage that benefits from C++ adds a `cpp/` subdirectory next to the
+Python code.
 
 ## Repository layout
 
@@ -57,6 +59,7 @@ Planned structure; directories appear as the corresponding stage begins.
 ├── documentation/                # Environment and stage notes
 ├── examples/                     # One directory per learning stage
 │   └── NN_stage_name/
+│       └── cpp/                  # Optional C++ variant of the stage
 ├── assets/                       # Shared MJCF models and meshes
 ├── tools/                        # Validation and utility scripts
 └── notebooks/                    # Exploratory notebooks, if useful
@@ -86,10 +89,19 @@ Validate a freshly built image with:
 MUJOCO_GL=egl ./docker/run.sh -- python3 tools/smoke_test.py   # also exercise offscreen render
 ```
 
+Both Python and C++ are supported. The image includes a C++ toolchain (g++, CMake, Ninja,
+`ccache`) and the pinned MuJoCo C/C++ SDK (headers, `libmujoco`, CMake package config, `simulate`):
+
+```bash
+./docker/run.sh -- bash -c 'cmake -S tools -B build/tools && cmake --build build/tools'
+./docker/run.sh -- ./build/tools/smoke_test_cpp
+```
+
 ## Status
 
 - [x] Project intent documented
 - [x] Dockerized development environment
+- [x] Python and C++ MuJoCo toolchains
 - [ ] Stage 0: environment validation (viewer + headless render)
 - [ ] Stage 1: MJCF basics
 

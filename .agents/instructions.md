@@ -20,6 +20,8 @@ environment is put together.
   deliberate decision recorded in `docker/files/requirements.txt`.
 - Keep documentation in sync with reality. If behaviour changes, update the relevant doc in the same
   change.
+- CI (`.github/workflows/`) lints all files with pre-commit and builds the image, the C++ tools and
+  runs both smoke tests. Keep both workflows green; they are the reference for what "working" means.
 
 ## Repository layout
 
@@ -50,10 +52,17 @@ Notes:
 - GPU support is enabled by default; pass `--no-gpu` on machines without NVIDIA tooling.
 - GUI windows need X11 access on the host (`DISPLAY`, `/tmp` is mounted). Headless rendering uses
   `MUJOCO_GL=egl` or `osmesa`.
-- Inside the container, `~/.cache` and `~/.bash_history` are symlinked into a persistent volume
-  (`~/ws/persistence`), so they survive container removal.
-- Validate the environment with `python3 tools/smoke_test.py` (add `MUJOCO_GL=egl` to exercise
-  offscreen rendering).
+- Inside the container, `~/.cache`, `~/.ccache` and `~/.bash_history` are symlinked into a
+  persistent volume (`~/ws/persistence`), so they survive container removal.
+- Validate Python with `python3 tools/smoke_test.py` (add `MUJOCO_GL=egl` to exercise offscreen
+  rendering) and C++ with:
+
+  ```bash
+  cmake -S tools -B build/tools && cmake --build build/tools && ./build/tools/smoke_test_cpp
+  ```
+
+- The container is started by the user. Do not run `./docker/run.sh`, `docker compose run` or
+  `docker exec` unprompted; ask for the container when you need to execute something inside it.
 
 ## Stage conventions
 
@@ -64,6 +73,19 @@ Each learning stage gets its own directory `examples/NN_stage_name/` containing:
 - Optional MJCF files kept next to the code; models reused across stages go in `assets/`.
 
 Stage numbering is defined in the roadmap in `README.md`. Do not renumber existing stages.
+
+## C++ conventions
+
+- The image provides g++, CMake, Ninja and the pinned MuJoCo C/C++ SDK under `/usr/local`
+  (`mujoco/mujoco.h`, `libmujoco.so`, CMake package config, `simulate`).
+- C++ stage code lives in `examples/NN_stage_name/cpp/` with a `CMakeLists.txt` that uses
+  `find_package(mujoco REQUIRED)` and links `mujoco::mujoco` (C++17).
+- Build out-of-tree into the gitignored `build/` directory, e.g.
+  `cmake -S examples/NN_name/cpp -B build/NN_name && cmake --build build/NN_name`.
+- `ccache` is available; enable it per project with
+  `-DCMAKE_CXX_COMPILER_LAUNCHER=ccache` when builds get long.
+- Formatting is enforced by pre-commit (`clang-format`, Chromium style, 120 columns) and
+  `.clang-tidy` is provided for manual use. CMake files are linted with `cmake-lint`.
 
 ## Code style
 

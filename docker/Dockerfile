@@ -21,7 +21,10 @@ RUN apt-get update \
  && apt-get install --no-install-recommends -y \
     adduser \
     bash-completion \
+    build-essential \
     ca-certificates \
+    ccache \
+    cmake \
     curl \
     gdb \
     git \
@@ -30,6 +33,8 @@ RUN apt-get update \
     locate \
     mc \
     nano \
+    ninja-build \
+    pkg-config \
     psmisc \
     python-is-python3 \
     python3-pip \
@@ -49,10 +54,14 @@ RUN apt-get update \
  && apt-get install --no-install-recommends -y \
     libegl1 \
     libgl1 \
+    libgl1-mesa-dev \
     libgl1-mesa-dri \
+    libglew-dev \
     libglew2.2 \
     libglfw3 \
+    libglfw3-dev \
     libglu1-mesa \
+    libglu1-mesa-dev \
     libgles2 \
     libosmesa6 \
     libvulkan1 \
@@ -77,6 +86,31 @@ ENV PIP_BREAK_SYSTEM_PACKAGES=1
 COPY docker/files/requirements.txt /tmp/requirements.txt
 RUN pip3 install --no-cache-dir --requirement /tmp/requirements.txt \
  && rm /tmp/requirements.txt
+
+#
+# MuJoCo C/C++ SDK: headers, shared library, CMake package config and samples.
+# The version must match the mujoco pin in docker/files/requirements.txt.
+
+ARG MUJOCO_VERSION=4.0.1
+
+RUN set -eux; \
+    case "$(uname -m)" in \
+        x86_64) MUJOCO_ARCH=x86_64 ;; \
+        aarch64) MUJOCO_ARCH=aarch64 ;; \
+        *) echo "Unsupported architecture: $(uname -m)" >&2; exit 1 ;; \
+    esac; \
+    cd /tmp; \
+    MUJOCO_TARBALL="mujoco-${MUJOCO_VERSION}-linux-${MUJOCO_ARCH}.tar.gz"; \
+    curl -fsSLO "https://github.com/google-deepmind/mujoco/releases/download/${MUJOCO_VERSION}/${MUJOCO_TARBALL}"; \
+    curl -fsSLO "https://github.com/google-deepmind/mujoco/releases/download/${MUJOCO_VERSION}/${MUJOCO_TARBALL}.sha256"; \
+    sha256sum -c "${MUJOCO_TARBALL}.sha256"; \
+    mkdir -p /tmp/mujoco; \
+    tar -xzf "${MUJOCO_TARBALL}" -C /tmp/mujoco --strip-components=1; \
+    cp -a /tmp/mujoco/include/. /usr/local/include/; \
+    cp -a /tmp/mujoco/lib/. /usr/local/lib/; \
+    if [ -d /tmp/mujoco/bin ]; then cp -a /tmp/mujoco/bin/. /usr/local/bin/; fi; \
+    ldconfig; \
+    rm -rf /tmp/mujoco /tmp/"${MUJOCO_TARBALL}"*
 
 RUN set -eux; \
     userdel ubuntu || true; \

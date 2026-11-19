@@ -26,6 +26,13 @@ The container is in `docker/` and mirrors the reference layout, with these inten
   `install/` trees.
 - **Graphics libraries** (`libegl1`, `libosmesa6`, `libglfw3`, Mesa DRI, Vulkan, X11 libs) are part of
   the base image so both the viewer and offscreen rendering work.
+- **C++ toolchain**: `build-essential`, `cmake`, `ninja-build`, `pkg-config`, `ccache`, plus the
+  `-dev` GL/GLFW/GLEW headers needed to build windowed applications and samples.
+- **MuJoCo C/C++ SDK**: the official `mujoco-<version>-linux-<arch>.tar.gz` release archive is
+  downloaded at build time, checksum-verified and installed under `/usr/local` (headers, shared
+  library, CMake package config and the `simulate` binary). `find_package(mujoco)` and `ldconfig`
+  then work without extra environment variables. The version is pinned with `ARG MUJOCO_VERSION`
+  and must match `docker/files/requirements.txt`.
 
 ## Directory layout
 
@@ -98,11 +105,13 @@ subdirectories into the home directory and workspace:
 | Path in volume                         | Symlinked to        |
 |----------------------------------------|---------------------|
 | `persistence/$(id -u)/cache`           | `~/.cache`          |
+| `persistence/$(id -u)/ccache`          | `~/.ccache`         |
 | `persistence/$(id -u)/.bash_history`   | `~/.bash_history`   |
 
-This repository only persists the pip/XDG cache and shell history. The reference projects also
-symlink `ccache`, `build/` and `install/` and mark them with `COLCON_IGNORE`; those belong to ROS
-workspaces and are not recreated here.
+This repository persists the pip/XDG cache, the `ccache` directory and shell history. The reference
+projects additionally symlink `build/` and `install/` and mark them with `COLCON_IGNORE`; those
+belong to ROS workspaces and are not recreated here. CMake build trees live in the gitignored
+`build/` directory.
 
 ## run.sh contract
 
@@ -154,7 +163,8 @@ Container name is `${USER}_${SERVICE_NAME}`, always started with `--rm`.
 | persistence volume + entrypoint symlinks | Yes           | Cache and shell history mostly |
 | X11 forwarding                          | Yes           | Native `mujoco.viewer` window |
 | `prebuilt_ws` + `.repos`                | No (initially) | MuJoCo ships as a pip wheel |
-| colcon / rosdep / ccache mixin          | No (initially) | Only if ROS 2 integration is added |
+| colcon / rosdep                         | No (initially) | Only if ROS 2 integration is added |
+| ccache                                  | Yes           | Persisted; opt in per CMake project |
 | `/dev` + privileged                     | No            | No hardware in scope |
 | Zenoh, RealSense, AutoDRIVE networks    | No            | Project-specific |
 
@@ -172,3 +182,10 @@ Container name is `${USER}_${SERVICE_NAME}`, always started with `--rm`.
    additional image stage if a later learning stage needs it.
 5. **Version pinning**: MuJoCo is pinned in `docker/files/requirements.txt`; any other dependency
    added later is pinned the same way.
+6. **C++ SDK**: installed from the official release archive rather than relying on the pip wheel,
+   which ships the shared library for the Python bindings but no supported C++ development surface.
+   The archive is checksum-verified (`sha256sum -c` against the published `.sha256` asset) and
+   installed into `/usr/local` so `find_package(mujoco)` and the dynamic linker need no extra
+   configuration. `MUJOCO_VERSION` in the Dockerfile and the pip pin are kept in sync.
+7. **C++ code layout**: each stage's optional C++ variant lives in `examples/NN_name/cpp/` with its
+   own `CMakeLists.txt`. `build/` is gitignored, so build trees never enter the repository.
