@@ -9,11 +9,13 @@ The main loop steps the physics, spawns marbles and syncs a passive viewer each
 frame.
 
 Run it with:
-    ./main.py
+    ./main.py --drop-interval 0.25 --marble-count 300
+    ./main.py --warp
 """
 
 from __future__ import annotations
 
+import argparse
 import math
 import time
 from dataclasses import dataclass
@@ -38,8 +40,8 @@ GLASS_RGBA = (0.35, 0.6, 0.95, 0.25)  # transparent walls
 # Marbles.
 MARBLE_RADIUS = 0.05  # 10 cm diameter
 MARBLE_SOLREF = (0.02, 0.2)  # time constant, damping ratio: bouncy
-POOL_SIZE = 30
-SPAWN_PERIOD = 0.5  # seconds between activations
+POOL_SIZE = 300
+SPAWN_PERIOD = 0.25  # seconds between activations
 SPAWN_HEIGHT = 1.1  # drop height (m) above the box
 
 # The unspawned pool floats here, far from the box and off-camera.
@@ -47,6 +49,7 @@ PARK_ORIGIN = (50.0, 0.0, 0.5)
 PARK_SPACING = 0.2
 
 RNG = np.random.default_rng()
+
 
 @dataclass(frozen=True)
 class MarbleReference:
@@ -58,7 +61,48 @@ class MarbleReference:
 # Per-marble references (filled by build_model) and the spawn-schedule state.
 _MARBLES: list[MarbleReference] = []
 _next_marble = 0
-_last_spawn = -SPAWN_PERIOD
+_last_spawn = -math.inf
+
+
+def positive_interval(value: str) -> float:
+    """Parse a finite, positive drop interval in seconds."""
+    interval = float(value)
+    if not math.isfinite(interval) or interval <= 0.0:
+        raise argparse.ArgumentTypeError(
+            "drop interval must be finite and greater than zero"
+        )
+    return interval
+
+
+def positive_count(value: str) -> int:
+    """Parse a positive number of marbles."""
+    count = int(value)
+    if count <= 0:
+        raise argparse.ArgumentTypeError("marble count must be greater than zero")
+    return count
+
+
+def parse_arguments(arguments: list[str] | None = None) -> argparse.Namespace:
+    """Read simulation settings from the command line."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--drop-interval",
+        type=positive_interval,
+        default=SPAWN_PERIOD,
+        help="simulated seconds between drops (default: %(default)s)",
+    )
+    parser.add_argument(
+        "--marble-count",
+        type=positive_count,
+        default=POOL_SIZE,
+        help="number of marbles in the cyclic pool (default: %(default)s)",
+    )
+    parser.add_argument(
+        "--warp",
+        action="store_true",
+        help="run physics with MuJoCo Warp on an NVIDIA CUDA device (default: CPU)",
+    )
+    return parser.parse_args(arguments)
 
 
 def build_container(spec: mujoco.MjSpec) -> None:
@@ -100,17 +144,19 @@ def _park_position(i: int, dims: tuple[int, int, int]) -> tuple[float, float, fl
     )
 
 
-def build_model() -> mujoco.MjModel:
+def build_model(marble_count: int = POOL_SIZE) -> mujoco.MjModel:
     """Load the scene, build the container and a pool of parked marbles."""
+    global _next_marble, _last_spawn
+
     spec = mujoco.MjSpec.from_file(str(SCENE_PATH))
     build_container(spec)
 
     # Pre-create the marble pool far from the box. Each is weightless and spaced
     # apart, so it floats off-camera until control() teleports it into the box and
     # switches its gravity back on. Colour is fixed per marble here.
-    side = math.ceil(POOL_SIZE ** (1 / 3))
+    side = math.ceil(marble_count ** (1 / 3))
     dims = (side, side, side)
-    for i in range(POOL_SIZE):
+    for i in range(marble_count):
         body = spec.worldbody.add_body()
         body.name = f"marble_{i:04d}"
         body.pos = np.array(_park_position(i, dims))
@@ -134,7 +180,9 @@ def build_model() -> mujoco.MjModel:
 
     # Cache what control() needs to teleport a marble.
     _MARBLES.clear()
-    for i in range(POOL_SIZE):
+    _next_marble = 0
+    _last_spawn = -math.inf
+    for i in range(marble_count):
         name = f"marble_{i:04d}"
         joint_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, f"{name}_free")
         body_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, name)
@@ -148,13 +196,18 @@ def build_model() -> mujoco.MjModel:
     return model
 
 
-def control(model: mujoco.MjModel, data: mujoco.MjData, sim_time: float) -> None:
-    """Teleport one parked marble into the box every SPAWN_PERIOD seconds."""
+def control(
+    model: mujoco.MjModel,
+    data: mujoco.MjData,
+    sim_time: float,
+    drop_interval: float = SPAWN_PERIOD,
+) -> None:
+    """Teleport one marble into the box when the drop interval has elapsed."""
     global _next_marble, _last_spawn
 
     if not _MARBLES:
         return
-    if sim_time - _last_spawn < SPAWN_PERIOD:
+    if sim_time - _last_spawn < drop_interval:
         return
     _last_spawn = sim_time
 
@@ -180,21 +233,56 @@ def control(model: mujoco.MjModel, data: mujoco.MjData, sim_time: float) -> None
 
 
 def main() -> None:
-    model = build_model()
+    arguments = parse_arguments()
+    model = build_model(arguments.marble_count)
     data = mujoco.MjData(model)
 
     print(f"MuJoCo {mujoco.__version__}: {model.ngeom} geoms, {model.njnt} joints")
 
+    if arguments.warp:
+        import mujoco_warp
+        import warp
+
+        if not warp.get_cuda_devices():
+            raise RuntimeError(
+                "--warp requires an NVIDIA GPU and a working CUDA driver"
+            )
+        warp.set_device("cuda:0")
+        warp_model = mujoco_warp.put_model(model)
+        # Reserve contacts for a dense pile, not just the initially separated pool.
+        contact_capacity = 16 * arguments.marble_count
+        warp_data = mujoco_warp.put_data(
+            model, data, nconmax=contact_capacity, njmax=4 * contact_capacity
+        )
+        print(f"Physics: MuJoCo Warp on {warp.get_device()}")
+    else:
+        print("Physics: MuJoCo CPU")
+
+    steps_per_frame = math.ceil(RENDER_DT / model.opt.timestep)
     with viewer.launch_passive(model, data) as gui:
         while gui.is_running():
             frame_start = time.perf_counter()
 
-            control(model, data, data.time)
+            control(model, data, data.time, arguments.drop_interval)
 
-            # Advance one frame of simulated time, then push it to the viewer.
-            sim_start = data.time
-            while data.time - sim_start < RENDER_DT:
-                mujoco.mj_step(model, data)
+            if arguments.warp:
+                # Warp keeps separate device arrays, with a leading world dimension.
+                warp_data.qpos.assign(data.qpos[np.newaxis, :])
+                warp_data.qvel.assign(data.qvel[np.newaxis, :])
+                warp_data.time.assign(np.array([data.time]))
+                warp_model.body_gravcomp.assign(model.body_gravcomp[np.newaxis, :])
+                for _ in range(steps_per_frame):
+                    mujoco_warp.step(warp_model, warp_data)
+                if (
+                    warp_data.nacon.numpy()[0] > warp_data.naconmax
+                    or warp_data.nefc.numpy()[0] > warp_data.njmax
+                ):
+                    raise RuntimeError("Warp contact or constraint capacity exceeded")
+                # The passive viewer reads host-side MuJoCo data, not device arrays.
+                mujoco_warp.get_data_into(data, model, warp_data)
+            else:
+                for _ in range(steps_per_frame):
+                    mujoco.mj_step(model, data)
             gui.sync()
 
             # Pace the loop to roughly real time.

@@ -21,6 +21,10 @@ The container is in `docker/` and mirrors the reference layout, with these inten
 - **MuJoCo instead of a workspace build.** `mujoco==4.0.1` is installed from a pinned
   `docker/files/requirements.txt` into the system Python (3.12), following the reference projects'
   use of `PIP_BREAK_SYSTEM_PACKAGES=1`.
+- **Optional GPU physics.** The same requirements include `mujoco-warp==4.0.1` for
+  `scratchbook/03_py_marbles_box/main.py --warp`. Standard MuJoCo remains the default CPU
+  backend. Warp mode needs an NVIDIA CUDA device exposed through the GPU Compose override.
+  Rebuild the image after changing Python dependencies.
 - **Entrypoint is `/mujoco_entrypoint.sh`**, not `/ros_entrypoint.sh`.
 - **Persistence** keeps `cache` and `.bash_history` per uid; it does not create `build/` or
   `install/` trees.

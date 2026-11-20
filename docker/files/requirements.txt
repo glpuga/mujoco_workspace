@@ -2,3 +2,5 @@
 # Keep in sync with MUJOCO_VERSION in docker/Dockerfile (C/C++ SDK).
 # The `mujoco` metapackage pulls mujoco-core, mujoco-studio, glfw and pyopengl.
 mujoco==4.0.1
+# Optional GPU physics backend used by scratchbook/03_py_marbles_box.
+mujoco-warp==4.0.1
