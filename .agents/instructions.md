@@ -31,6 +31,7 @@ documentation/     # Environment notes and stage documentation
 examples/          # One directory per learning stage (created as stages begin)
 scratchbook/       # Small self-contained experiments, same layout as stages
 assets/            # Shared MJCF models and meshes
+libs/              # Shared C++ libraries (mujoco_viewer: reusable interactive viewer)
 tools/             # Small utility/validation scripts
 ```
 
@@ -93,6 +94,10 @@ Stage numbering is defined in the roadmap in `README.md`. Do not renumber existi
   `cmake -S examples/NN_name/cpp -B build/NN_name && cmake --build build/NN_name`.
 - `ccache` is available; enable it per project with
   `-DCMAKE_CXX_COMPILER_LAUNCHER=ccache` when builds get long.
+- Reuse the shared viewer instead of rewriting GLFW boilerplate: `libs/mujoco_viewer` exposes
+  `mujoco_viewer::Launch(model, data)`, which opens the interactive window (mouse orbit/zoom,
+  Backspace resets). Consume it with `add_subdirectory(<repo>/libs/mujoco_viewer ...)`; see
+  `scratchbook/01_cpp_solitary_cube_and_sphere`.
 - Formatting is enforced by pre-commit (`clang-format`, Chromium style, 120 columns) and
   `.clang-tidy` is provided for manual use. CMake files are linted with `cmake-lint`.
 

@@ -63,6 +63,8 @@ Planned structure; directories appear as the corresponding stage begins.
 │       └── cpp/                  # Optional C++ variant of the stage
 ├── scratchbook/                  # Small self-contained experiments, same layout
 ├── assets/                       # Shared MJCF models and meshes
+├── libs/                         # Shared C++ libraries
+│   └── mujoco_viewer/            # Reusable GLFW viewer for C++ exercises
 ├── tools/                        # Validation and utility scripts
 └── notebooks/                    # Exploratory notebooks, if useful
 ```

@@ -195,4 +195,6 @@ Container name is `${USER}_${SERVICE_NAME}`, always started with `--rm`.
    archive contains no CMake support files, a minimal `mujocoConfig.cmake` is installed with it.
    `MUJOCO_VERSION` in the Dockerfile and the pip pin are kept in sync.
 7. **C++ code layout**: each stage's optional C++ variant lives in `examples/NN_name/cpp/` with its
-   own `CMakeLists.txt`. `build/` is gitignored, so build trees never enter the repository.
+   own `CMakeLists.txt`. `build/` is gitignored, so build trees never enter the repository. Code
+   shared by several C++ exercises (currently the interactive viewer) lives in `libs/`; exercises
+   consume `libs/mujoco_viewer` with `add_subdirectory`, so the GLFW render loop is written once.
