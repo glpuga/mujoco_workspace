@@ -1,0 +1,16 @@
+<mujoco model="marbles_box">
+  <asset>
+    <!-- Gradient sky, as used by MuJoCo's own sample models. -->
+    <texture type="skybox" builtin="gradient" rgb1=".3 .5 .7" rgb2="0 0 0" width="32" height="512"/>
+    <!-- The checker board used by MuJoCo's own sample models. -->
+    <texture name="grid" type="2d" builtin="checker" width="512" height="512"
+             rgb1=".1 .2 .3" rgb2=".2 .3 .4"/>
+    <material name="grid" texture="grid" texrepeat="1 1" texuniform="true" reflectance=".2"/>
+  </asset>
+  <worldbody>
+    <!-- MuJoCo's sample scenes light their dark checker floor explicitly. -->
+    <light name="sun" directional="true" dir="-.3 .3 -1" diffuse=".8 .8 .8" specular=".2 .2 .2"/>
+    <geom name="floor" type="plane" size="0 0 0.05" material="grid" condim="3"/>
+    <!-- The container walls are built programmatically in main.py. -->
+  </worldbody>
+</mujoco>
