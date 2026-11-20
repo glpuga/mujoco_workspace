@@ -11,9 +11,15 @@
     <!-- MuJoCo's sample scenes light their dark checker floor explicitly. -->
     <light name="sun" directional="true" dir="-.3 .3 -1" diffuse=".8 .8 .8" specular=".2 .2 .2"/>
     <geom name="floor" type="plane" size="0 0 0.05" material="grid" condim="3"/>
-    <!-- Blue 25 cm cube, resting on the z = 0 plane. -->
-    <geom name="cube" type="box" size="0.125 0.125 0.125" pos="-0.2 0 0.125" rgba="0 0 1 1"/>
-    <!-- Red 30 cm diameter sphere, next to the cube and touching the same plane. -->
-    <geom name="sphere" type="sphere" size="0.15" pos="0.2 0 0.15" rgba="1 0 0 1"/>
+    <!-- Blue 25 cm cube: a free body resting on the z = 0 plane. -->
+    <body name="cube" pos="-0.2 0 0.125">
+      <freejoint name="cube_free"/>
+      <geom name="cube_geom" type="box" size="0.125 0.125 0.125" rgba="0 0 1 1"/>
+    </body>
+    <!-- Red 30 cm diameter sphere: a free body next to the cube. -->
+    <body name="sphere" pos="0.2 0 0.15">
+      <freejoint name="sphere_free"/>
+      <geom name="sphere_geom" type="sphere" size="0.15" rgba="1 0 0 1"/>
+    </body>
   </worldbody>
 </mujoco>

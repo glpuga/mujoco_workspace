@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """A blue 25 cm cube next to a red 30 cm sphere in an otherwise empty world.
 
-The MJCF description lives in ``env/``. Both geoms are static (no joints), so
-this is a purely visual scene: the model compiles and the viewer runs its
-real-time loop, but nothing moves.
+The MJCF description lives in ``env/``. Both objects are free bodies, so they
+settle onto the floor under gravity while the viewer runs the real-time loop.
 
 Run it with:
     ./main.py
