@@ -12,6 +12,7 @@ Run it with:
 
 from __future__ import annotations
 
+import math
 from pathlib import Path
 
 import mujoco
@@ -24,20 +25,29 @@ RADIUS = 0.125  # 25 cm diameter
 DROP_HEIGHT = 1.0
 TIME_CONST = 0.02  # contact solref time constant
 
-# name, x position, colour, and contact damping ratio (lower bounces more).
+# name, x position, colour, and target coefficient of restitution.
+# Restitution is graded linearly from 0.75 (bounciest) down to 0 (dead).
 BALLS = [
-    ("ball_red", -1.5, (1.0, 0.0, 0.0, 1.0), 0.2),
-    ("ball_green", -0.75, (0.0, 1.0, 0.0, 1.0), 0.4),
-    ("ball_blue", 0.0, (0.0, 0.0, 1.0, 1.0), 0.6),
-    ("ball_yellow", 0.75, (1.0, 1.0, 0.0, 1.0), 0.8),
-    ("ball_magenta", 1.5, (1.0, 0.0, 1.0, 1.0), 1.0),
+    ("ball_red", -1.5, (1.0, 0.0, 0.0, 1.0), 0.75),
+    ("ball_green", -0.75, (0.0, 1.0, 0.0, 1.0), 0.5625),
+    ("ball_blue", 0.0, (0.0, 0.0, 1.0, 1.0), 0.375),
+    ("ball_yellow", 0.75, (1.0, 1.0, 0.0, 1.0), 0.1875),
+    ("ball_magenta", 1.5, (1.0, 0.0, 1.0, 1.0), 0.0),
 ]
+
+
+def damping_ratio(restitution: float) -> float:
+    """Convert a coefficient of restitution to a solref damping ratio."""
+    if restitution <= 0.0:
+        return 1.0  # critically damped: no rebound
+    log_e = -math.log(restitution)
+    return log_e / math.sqrt(math.pi**2 + log_e**2)
 
 
 def build_model() -> mujoco.MjModel:
     spec = mujoco.MjSpec.from_file(str(SCENE_PATH))
 
-    for name, x, rgba, damping in BALLS:
+    for name, x, rgba, restitution in BALLS:
         body = spec.worldbody.add_body()
         body.name = name
         body.pos = np.array([x, 0.0, DROP_HEIGHT])
@@ -48,8 +58,7 @@ def build_model() -> mujoco.MjModel:
         geom.type = mujoco.mjtGeom.mjGEOM_SPHERE
         geom.size = np.array([RADIUS, 0.0, 0.0])
         geom.rgba = np.array(rgba)
-        # Second solref value is the contact damping ratio (1 = no bounce).
-        geom.solref = np.array([TIME_CONST, damping])
+        geom.solref = np.array([TIME_CONST, damping_ratio(restitution)])
         geom.priority = 1
 
     return spec.compile()
