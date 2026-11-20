@@ -29,6 +29,7 @@ environment is put together.
 docker/            # Development environment (Dockerfile, compose, run.sh, files/)
 documentation/     # Environment notes and stage documentation
 examples/          # One directory per learning stage (created as stages begin)
+scratchbook/       # Small self-contained experiments, same layout as stages
 assets/            # Shared MJCF models and meshes
 tools/             # Small utility/validation scripts
 ```
@@ -61,8 +62,9 @@ Notes:
   cmake -S tools -B build/tools && cmake --build build/tools && ./build/tools/smoke_test_cpp
   ```
 
-- The container is started by the user. Do not run `./docker/run.sh`, `docker compose run` or
-  `docker exec` unprompted; ask for the container when you need to execute something inside it.
+- The user runs the container and tests scripts themselves. Do not run `./docker/run.sh`,
+  `docker compose run`, `docker exec` or image builds unless explicitly asked; provide the commands
+  instead.
 
 ## Stage conventions
 
@@ -70,7 +72,10 @@ Each learning stage gets its own directory `examples/NN_stage_name/` containing:
 
 - `README.md` — what the stage demonstrates, the concepts involved, and what to look at.
 - One or more standalone Python entry points (e.g. `main.py`) runnable from the repository root.
-- Optional MJCF files kept next to the code; models reused across stages go in `assets/`.
+- `env/` — the MJCF description(s) for the subproject. Scripts load them with a path derived from
+  `__file__`, never from the current working directory. Models shared across stages go in `assets/`.
+
+The same layout applies to `scratchbook/` subprojects.
 
 MJCF files anywhere outside `docker/` are compiled by the `mjcf-compile` pre-commit hook, so a
 model that MuJoCo cannot compile cannot be committed.

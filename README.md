@@ -59,11 +59,17 @@ Planned structure; directories appear as the corresponding stage begins.
 ├── documentation/                # Environment and stage notes
 ├── examples/                     # One directory per learning stage
 │   └── NN_stage_name/
+│       ├── env/                  # MJCF description(s) for the subproject
 │       └── cpp/                  # Optional C++ variant of the stage
+├── scratchbook/                  # Small self-contained experiments, same layout
 ├── assets/                       # Shared MJCF models and meshes
 ├── tools/                        # Validation and utility scripts
 └── notebooks/                    # Exploratory notebooks, if useful
 ```
+
+Every subproject (under `examples/` and `scratchbook/`) keeps its MJCF models in an `env/`
+subdirectory and loads them with a path derived from the script's location, never from the current
+working directory.
 
 ## Environment
 
