@@ -113,6 +113,13 @@ RUN set -eux; \
     ldconfig; \
     rm -rf /tmp/mujoco /tmp/"${MUJOCO_TARBALL}"*
 
+#
+# MuJoCo source at the pinned version: documentation (doc/), sample code
+# (sample/), models (model/) and headers, browsable offline.
+
+RUN git clone --depth 1 --branch "${MUJOCO_VERSION}" https://github.com/google-deepmind/mujoco.git /opt/mujoco-src \
+ && rm -rf /opt/mujoco-src/.git
+
 # The release archive ships no CMake package config; install a minimal one so
 # downstream projects can use find_package(mujoco) and link mujoco::mujoco.
 COPY --chown=root:root docker/files/mujocoConfig.cmake /usr/local/lib/cmake/mujoco/mujocoConfig.cmake

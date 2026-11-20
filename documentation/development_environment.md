@@ -35,6 +35,10 @@ The container is in `docker/` and mirrors the reference layout, with these inten
   `/usr/local/lib/cmake/mujoco/mujocoConfig.cmake`, which exposes the `mujoco::mujoco` imported
   target. `find_package(mujoco)` and `ldconfig` then work without extra environment variables. The
   version is pinned with `ARG MUJOCO_VERSION` and must match `docker/files/requirements.txt`.
+- **MuJoCo source**: a shallow clone of the repository at the pinned version is kept at
+  `/opt/mujoco-src` so the documentation (`doc/`, reStructuredText/Markdown source), sample code
+  (`sample/`), models (`model/`) and headers are browsable offline. The `mjdoc` and `mjmodels`
+  aliases jump there.
 
 ## Directory layout
 
