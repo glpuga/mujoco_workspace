@@ -90,7 +90,8 @@ MUJOCO_GL=egl ./docker/run.sh -- python3 tools/smoke_test.py   # also exercise o
 ```
 
 Both Python and C++ are supported. The image includes a C++ toolchain (g++, CMake, Ninja,
-`ccache`) and the pinned MuJoCo C/C++ SDK (headers, `libmujoco`, CMake package config, `simulate`):
+`ccache`) and the pinned MuJoCo C/C++ SDK (headers, `libmujoco`, `simulate`, and a `mujoco::mujoco`
+CMake package config):
 
 ```bash
 ./docker/run.sh -- bash -c 'cmake -S tools -B build/tools && cmake --build build/tools'

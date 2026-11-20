@@ -10,3 +10,4 @@ find_package(mujoco REQUIRED)
 
 add_executable(smoke_test_cpp smoke_test.cpp)
 target_link_libraries(smoke_test_cpp PRIVATE mujoco::mujoco)
+target_compile_options(smoke_test_cpp PRIVATE -Wall -Wextra)

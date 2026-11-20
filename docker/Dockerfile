@@ -109,8 +109,14 @@ RUN set -eux; \
     cp -a /tmp/mujoco/include/. /usr/local/include/; \
     cp -a /tmp/mujoco/lib/. /usr/local/lib/; \
     if [ -d /tmp/mujoco/bin ]; then cp -a /tmp/mujoco/bin/. /usr/local/bin/; fi; \
+    chown -R root:root /usr/local/include/mujoco; \
     ldconfig; \
     rm -rf /tmp/mujoco /tmp/"${MUJOCO_TARBALL}"*
+
+# The release archive ships no CMake package config; install a minimal one so
+# downstream projects can use find_package(mujoco) and link mujoco::mujoco.
+COPY --chown=root:root docker/files/mujocoConfig.cmake /usr/local/lib/cmake/mujoco/mujocoConfig.cmake
+RUN sed -i "s/@MUJOCO_VERSION@/${MUJOCO_VERSION}/" /usr/local/lib/cmake/mujoco/mujocoConfig.cmake
 
 RUN set -eux; \
     userdel ubuntu || true; \

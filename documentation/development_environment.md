@@ -30,9 +30,11 @@ The container is in `docker/` and mirrors the reference layout, with these inten
   `-dev` GL/GLFW/GLEW headers needed to build windowed applications and samples.
 - **MuJoCo C/C++ SDK**: the official `mujoco-<version>-linux-<arch>.tar.gz` release archive is
   downloaded at build time, checksum-verified and installed under `/usr/local` (headers, shared
-  library, CMake package config and the `simulate` binary). `find_package(mujoco)` and `ldconfig`
-  then work without extra environment variables. The version is pinned with `ARG MUJOCO_VERSION`
-  and must match `docker/files/requirements.txt`.
+  library, plugins and the `simulate` binary). The archive ships no CMake package config, so the
+  image installs the minimal `docker/files/mujocoConfig.cmake` as
+  `/usr/local/lib/cmake/mujoco/mujocoConfig.cmake`, which exposes the `mujoco::mujoco` imported
+  target. `find_package(mujoco)` and `ldconfig` then work without extra environment variables. The
+  version is pinned with `ARG MUJOCO_VERSION` and must match `docker/files/requirements.txt`.
 
 ## Directory layout
 
@@ -185,7 +187,8 @@ Container name is `${USER}_${SERVICE_NAME}`, always started with `--rm`.
 6. **C++ SDK**: installed from the official release archive rather than relying on the pip wheel,
    which ships the shared library for the Python bindings but no supported C++ development surface.
    The archive is checksum-verified (`sha256sum -c` against the published `.sha256` asset) and
-   installed into `/usr/local` so `find_package(mujoco)` and the dynamic linker need no extra
-   configuration. `MUJOCO_VERSION` in the Dockerfile and the pip pin are kept in sync.
+   installed into `/usr/local` so the dynamic linker needs no extra configuration. Because the
+   archive contains no CMake support files, a minimal `mujocoConfig.cmake` is installed with it.
+   `MUJOCO_VERSION` in the Dockerfile and the pip pin are kept in sync.
 7. **C++ code layout**: each stage's optional C++ variant lives in `examples/NN_name/cpp/` with its
    own `CMakeLists.txt`. `build/` is gitignored, so build trees never enter the repository.

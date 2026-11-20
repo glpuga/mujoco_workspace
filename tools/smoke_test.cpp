@@ -64,7 +64,9 @@ int main() {
     mj_step(model, data);
   }
 
-  std::printf("Bodies/joints/geoms: %d/%d/%d\n", model->nbody, model->njnt, model->ngeom);
+  std::printf(
+      "Bodies/joints/geoms: %ld/%ld/%ld\n", static_cast<long>(model->nbody), static_cast<long>(model->njnt),
+      static_cast<long>(model->ngeom));
   std::printf("Simulated time : %.3f s\n", data->time);
   std::printf("Hinge angle    : %.3f rad\n", data->qpos[0]);
 

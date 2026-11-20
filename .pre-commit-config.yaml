@@ -38,6 +38,9 @@ repos:
     rev: v0.6.13
     hooks:
       - id: cmake-lint
+        # CMake's find_package convention requires mujoco_VERSION/mujoco_FOUND,
+        # which cmake-lint's naming rule rejects.
+        exclude: ^docker/files/mujocoConfig\.cmake$
 
 exclude: |
     (?x)(

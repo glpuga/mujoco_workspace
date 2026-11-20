@@ -77,7 +77,8 @@ Stage numbering is defined in the roadmap in `README.md`. Do not renumber existi
 ## C++ conventions
 
 - The image provides g++, CMake, Ninja and the pinned MuJoCo C/C++ SDK under `/usr/local`
-  (`mujoco/mujoco.h`, `libmujoco.so`, CMake package config, `simulate`).
+  (`mujoco/mujoco.h`, `libmujoco.so`, `simulate`, and a minimal `mujoco::mujoco` CMake package
+  config installed by the image because the release archive lacks one).
 - C++ stage code lives in `examples/NN_stage_name/cpp/` with a `CMakeLists.txt` that uses
   `find_package(mujoco REQUIRED)` and links `mujoco::mujoco` (C++17).
 - Build out-of-tree into the gitignored `build/` directory, e.g.
