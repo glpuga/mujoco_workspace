@@ -51,6 +51,8 @@ dependencies. Everything is driven through `docker/run.sh`:
 
 Notes:
 
+- The bind-mounted source tree includes `documentation/`; consult repository documentation first
+  rather than fetching external documentation when the needed information is available locally.
 - GPU support is enabled by default; pass `--no-gpu` on machines without NVIDIA tooling.
 - GUI windows need X11 access on the host (`DISPLAY`, `/tmp` is mounted). Headless rendering uses
   `MUJOCO_GL=egl` or `osmesa`.
@@ -104,6 +106,8 @@ Stage numbering is defined in the roadmap in `README.md`. Do not renumber existi
 ## Code style
 
 - Python targeted at 3.11+ (the container ships 3.12); use type hints where they add clarity.
+- Prefer descriptive names and avoid abbreviations or acronyms in identifiers; keep those required by external APIs.
+- In educational examples, make array components explicit; avoid scalar broadcasting that hides their meaning.
 - Prefer explicit `mujoco.MjModel` / `mujoco.MjData` / `mj_step` loops over hidden wrappers; the
   point is to learn the API.
 - Keep examples small and readable; comments explain *why*, not *what*.

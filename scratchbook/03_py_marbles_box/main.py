@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import math
 import time
+from dataclasses import dataclass
 from pathlib import Path
 
 import mujoco
@@ -47,8 +48,15 @@ PARK_SPACING = 0.2
 
 RNG = np.random.default_rng()
 
-# Per-marble ids/addresses (filled by build_model) and the spawn-schedule state.
-_MARBLES: list[dict] = []
+@dataclass(frozen=True)
+class MarbleReference:
+    body_id: int
+    position_address: int
+    velocity_address: int
+
+
+# Per-marble references (filled by build_model) and the spawn-schedule state.
+_MARBLES: list[MarbleReference] = []
 _next_marble = 0
 _last_spawn = -SPAWN_PERIOD
 
@@ -128,14 +136,14 @@ def build_model() -> mujoco.MjModel:
     _MARBLES.clear()
     for i in range(POOL_SIZE):
         name = f"marble_{i:04d}"
-        jid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, f"{name}_free")
-        bid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, name)
+        joint_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, f"{name}_free")
+        body_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, name)
         _MARBLES.append(
-            {
-                "body": bid,
-                "qposadr": model.jnt_qposadr[jid],
-                "dofadr": model.jnt_dofadr[jid],
-            }
+            MarbleReference(
+                body_id=body_id,
+                position_address=model.jnt_qposadr[joint_id],
+                velocity_address=model.jnt_dofadr[joint_id],
+            )
         )
     return model
 
@@ -159,13 +167,16 @@ def control(model: mujoco.MjModel, data: mujoco.MjData, sim_time: float) -> None
     x = RNG.uniform(-half, half)
     y = RNG.uniform(-half, half)
     z = SPAWN_HEIGHT + RNG.uniform(0.0, 0.5)
-    quat = RNG.normal(size=4)
-    quat /= np.linalg.norm(quat)
+    quaternion = RNG.normal(size=4)
+    quaternion /= np.linalg.norm(quaternion)
 
-    adr = marble["qposadr"]
-    data.qpos[adr : adr + 7] = [x, y, z, *quat]
-    data.qvel[marble["dofadr"] : marble["dofadr"] + 6] = 0.0
-    model.body_gravcomp[marble["body"]] = 0.0  # let it fall again
+    position_address = marble.position_address
+    velocity_address = marble.velocity_address
+    data.qpos[position_address : position_address + 7] = [x, y, z, *quaternion]
+    # Free-joint velocity is linear x/y/z followed by angular x/y/z.
+    data.qvel[velocity_address : velocity_address + 3] = [0.0, 0.0, 0.0]
+    data.qvel[velocity_address + 3 : velocity_address + 6] = [0.0, 0.0, 0.0]
+    model.body_gravcomp[marble.body_id] = 0.0  # let it fall again
 
 
 def main() -> None:
