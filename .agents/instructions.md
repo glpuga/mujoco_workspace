@@ -72,6 +72,9 @@ Each learning stage gets its own directory `examples/NN_stage_name/` containing:
 - One or more standalone Python entry points (e.g. `main.py`) runnable from the repository root.
 - Optional MJCF files kept next to the code; models reused across stages go in `assets/`.
 
+MJCF files anywhere outside `docker/` are compiled by the `mjcf-compile` pre-commit hook, so a
+model that MuJoCo cannot compile cannot be committed.
+
 Stage numbering is defined in the roadmap in `README.md`. Do not renumber existing stages.
 
 ## C++ conventions
