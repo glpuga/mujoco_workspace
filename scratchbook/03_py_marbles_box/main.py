@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""A transparent 1 x 1 x 1 m open-top container in an otherwise empty world.
+"""A 0.5 x 0.5 m open-top container with 1 m high walls in an empty world.
 
 The scene in ``env/`` provides the floor, light and textures; the four thin,
-semi-transparent walls are built here in Python so their size is driven by the
-constants below. The ground plane forms the bottom of the box.
+semi-transparent walls are built here in Python, with their size driven by the
+constants below. The ground plane serves as the bottom of the box.
 
-The main loop is ours: it steps the physics and syncs a passive viewer each
-frame. This is the hook where marbles will be spawned.
+The main loop steps the physics, spawns marbles and syncs a passive viewer each
+frame.
 
 Run it with:
     ./main.py
